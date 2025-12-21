@@ -1,0 +1,41 @@
+# simulator/tasks.yaml
+tasks:
+  - id: "py_debug_1"
+    name: "Debug Python Syntax Error"
+    skill: "Python Debugging"
+    category: "Programming"
+    base_time_sec: 15
+    base_errors: 1
+    difficulty: 3
+
+  - id: "excel_vlookup"
+    name: "Use VLOOKUP in Excel"
+    skill: "Excel Data Lookup"
+    category: "Data Analysis"
+    base_time_sec: 20
+    base_errors: 2
+    difficulty: 4
+
+  - id: "git_commit"
+    name: "Commit with Git CLI"
+    skill: "Version Control"
+    category: "DevOps"
+    base_time_sec: 8
+    base_errors: 0
+    difficulty: 2
+
+  - id: "sql_join"
+    name: "Write INNER JOIN Query"
+    skill: "SQL Querying"
+    category: "Databases"
+    base_time_sec: 25
+    base_errors: 3
+    difficulty: 5
+
+  - id: "crm_lead"
+    name: "Create Lead in CRM"
+    skill: "CRM Usage"
+    category: "Sales"
+    base_time_sec: 12
+    base_errors: 1
+    difficulty: 2
