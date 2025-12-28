@@ -1,16 +1,32 @@
-# backend/database.py
-from motor.motor_asyncio import AsyncIOMotorClient
 import os
+from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo import ReadPreference
 
 MONGO_URI = os.getenv("MONGO_URI")
-DB_NAME = os.getenv("DB_NAME", "skill_taxonomy_v2")
+DB_NAME = os.getenv("DB_NAME")
 
-if not MONGO_URI:
-    raise RuntimeError("MONGO_URI is not set in environment variables.")
+client = AsyncIOMotorClient(
+    MONGO_URI,
+    serverSelectionTimeoutMS=8000,
+    read_preference=ReadPreference.PRIMARY_PREFERRED,
+    retryWrites=True
+)
 
-client = AsyncIOMotorClient(MONGO_URI)
 db = client[DB_NAME]
 
 users_collection = db["users"]
 skills_collection = db["skills"]
-user_skills_collection = db["user_skills"]  # For dynamic per-user profiles
+user_skills_collection = db["user_skills"]
+events_collection = db["events"]
+
+# -------------------------------------------------
+# ✅ SAFE MongoDB initialization
+# -------------------------------------------------
+async def init_db():
+    try:
+        await client.server_info()
+        await users_collection.create_index("email", unique=True)
+        await skills_collection.create_index("skill_name", unique=True)
+        print("✅ MongoDB connection verified & indexes ensured")
+    except Exception as e:
+        print(f"⚠️ MongoDB not ready yet: {e}")

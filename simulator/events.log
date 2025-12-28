@@ -3,3 +3,10 @@
 {"user_id": "5", "task_id": "py_debug_1", "skill": "Python Debugging", "category": "Programming", "errors": 0, "retries": 0, "time_taken_sec": 18, "timestamp": "2025-12-21T12:03:51.869981+00:00", "success": true}
 {"user_id": "11", "task_id": "py_debug_1", "skill": "Python Debugging", "category": "Programming", "errors": 0, "retries": 0, "time_taken_sec": 27, "timestamp": "2025-12-21T12:06:23.524419+00:00", "success": true}
 {"user_id": "u5", "task_id": "py_debug_1", "skill": "Python Debugging", "category": "Programming", "errors": 1, "retries": 1, "time_taken_sec": 23, "timestamp": "2025-12-21T12:07:06.232528+00:00", "success": false}
+{"user_id": "45", "task_id": "py_debug_1", "skill": "Python Debugging", "category": "Programming", "errors": 1, "retries": 1, "time_taken_sec": 18, "timestamp": "2025-12-21T13:01:09.506576+00:00", "success": false}
+{"user_id": "u8", "task_id": "py_debug_1", "skill": "Python Debugging", "category": "Programming", "errors": 1, "retries": 1, "time_taken_sec": 12, "timestamp": "2025-12-22T06:12:59.756368+00:00", "success": false}
+{"user_id": "u8", "task_id": "py_debug_1", "skill": "Python Debugging", "category": "Programming", "errors": 0, "retries": 0, "time_taken_sec": 17, "timestamp": "2025-12-24T06:02:18.575540+00:00", "success": true}
+{"user_id": "u8", "task_id": "py_debug_1", "skill": "Python Debugging", "category": "Programming", "errors": 1, "retries": 1, "time_taken_sec": 19, "timestamp": "2025-12-24T14:43:57.479240+00:00", "success": false}
+{"user_id": "u10", "task_id": "py_debug_1", "skill": "Python Debugging", "category": "Programming", "errors": 0, "retries": 0, "time_taken_sec": 19, "timestamp": "2025-12-26T10:03:25.331589+00:00", "success": true}
+{"user_id": "u11", "task_id": "py_debug_1", "skill": "Python Debugging", "category": "Programming", "errors": 1, "retries": 1, "time_taken_sec": 18, "timestamp": "2025-12-26T11:32:37.564150+00:00", "success": false}
+{"user_id": "u12", "task_id": "py_debug_1", "skill": "Python Debugging", "category": "Programming", "errors": 1, "retries": 1, "time_taken_sec": 22, "timestamp": "2025-12-27T07:13:46.709130+00:00", "success": false}

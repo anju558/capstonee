@@ -126,17 +126,3 @@ class TaskEvent(BaseModel):
 
     class Config:
         populate_by_name = True
-
-# --- Task Event Model (for WebSocket) ---
-class TaskEvent(BaseModel):
-    user_id: str
-    skill: str
-    errors: int = 0
-    retries: int = 0
-    time_taken_sec: float
-    timestamp: Optional[str] = None
-    task_id: Optional[str] = None
-    success: Optional[bool] = None
-
-    class Config:
-        populate_by_name = True        

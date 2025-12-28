@@ -19,7 +19,7 @@ try:
     with open(TASKS_FILE, encoding="utf-8") as f:
         TASKS = yaml.safe_load(f)["tasks"]
 except FileNotFoundError:
-    console.print(f"[red]❌ tasks.yaml not found at {TASKS_FILE}[/red]")
+    console.print(f"[red] tasks.yaml not found at {TASKS_FILE}[/red]")
     TASKS = [
         {
             "id": "demo_task",
@@ -69,7 +69,7 @@ def simulate_task(task, user_skill_level=50):
 
 
 def main():
-    console.print("[bold blue]🚀 Skill Agent Task Simulator[/bold blue]")
+    console.print("[bold blue] Skill Agent Task Simulator[/bold blue]")
     console.print("Simulate user task attempts to generate skill gap events.\n")
 
     # Select user
@@ -79,7 +79,7 @@ def main():
         if not (0 <= skill_level <= 100):
             raise ValueError
     except ValueError:
-        console.print("[yellow]⚠️  Invalid skill level. Using 50.[/yellow]")
+        console.print("[yellow]  Invalid skill level. Using 50.[/yellow]")
         skill_level = 50
 
     # Select task
@@ -97,10 +97,10 @@ def main():
         choice = int(Prompt.ask("Select task number", default="1")) - 1
         task = TASKS[choice]
     except (ValueError, IndexError):
-        console.print("[yellow]⚠️  Invalid choice. Using first task.[/yellow]")
+        console.print("[yellow]  Invalid choice. Using first task.[/yellow]")
         task = TASKS[0]
 
-    console.print(f"\n[bold]▶️  Simulating: {task['name']}[/bold]")
+    console.print(f"\n[bold] Simulating: {task['name']}[/bold]")
 
     with console.status("[bold green]Working...[/bold green]") as status:
         time.sleep(1.5)
@@ -109,11 +109,11 @@ def main():
 
     # Show result
     color = "green" if event["success"] else "red"
-    console.print(f"\n[bold {color}]{'✅ Success' if event['success'] else '❌ Failed'}![/bold {color}]")
+    console.print(f"\n[bold {color}]{' Success' if event['success'] else ' Failed'}![/bold {color}]")
     console.print(f"Errors: {event['errors']} | Retries: {event['retries']} | Time: {event['time_taken_sec']}s")
 
     # Output event
-    console.print("\n[bold]📤 Generated Event:[/bold]")
+    console.print("\n[bold] Generated Event:[/bold]")
     console.print_json(json.dumps(event, indent=2))
 
     # Save to file
@@ -121,7 +121,7 @@ def main():
     log_file.parent.mkdir(exist_ok=True)
     with open(log_file, "a", encoding="utf-8") as f:
         f.write(json.dumps(event) + "\n")
-    console.print(f"\n💾 Saved to [cyan]{log_file}[/cyan]")
+    console.print(f"\n Saved to [cyan]{log_file}[/cyan]")
 
     # --- Send to Backend (WebSocket) ---
     if Confirm.ask("Send to backend (ws://localhost:8000/api/events)?", default=True):
@@ -141,22 +141,22 @@ def main():
             
             status = response.get("status", "unknown")
             if status == "received":
-                console.print(f"[green]✅ Backend received event for skill: {response.get('skill')}[/green]")
+                console.print(f"[green] Backend received event for skill: {response.get('skill')}[/green]")
             else:
-                console.print(f"[yellow]⚠️  Backend response: {response}[/yellow]")
+                console.print(f"[yellow]  Backend response: {response}[/yellow]")
 
         except Exception as e:
-            console.print(f"[red]❌ Failed to send: {e}[/red]")
-            console.print("[yellow]💡 Tip: Is your backend running? Check: http://localhost:8000/docs[/yellow]")
+            console.print(f"[red] Failed to send: {e}[/red]")
+            console.print("[yellow] Tip: Is your backend running? Check: http://localhost:8000/docs[/yellow]")
 
-    console.print("\n[bold]✨ Simulation complete![/bold]")
+    console.print("\n[bold] Simulation complete![/bold]")
 
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        console.print("\n[bold yellow]⏹️  Simulation interrupted.[/bold yellow]")
+        console.print("\n[bold yellow]  Simulation interrupted.[/bold yellow]")
     except Exception as e:
-        console.print(f"[red]💥 Unexpected error: {e}[/red]")
+        console.print(f"[red] Unexpected error: {e}[/red]")
         raise
