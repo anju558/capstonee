@@ -1,17 +1,9 @@
 from fastapi import APIRouter, Depends
-from backend.auth import require_role
-from backend.services.analytics import skill_gap_summary
+from backend.auth import get_current_user
+from backend.services.skill_summary import generate_skill_report
 
-router = APIRouter(
-    prefix="/api/analytics",
-    tags=["Analytics 🔒"]
-)
+router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
-@router.get("/skill-gaps")
-async def get_skill_gaps(
-    admin=Depends(require_role("admin"))
-):
-    return {
-        "status": "success",
-        "data": await skill_gap_summary()
-    }
+@router.get("/skills")
+async def get_skill_report(user=Depends(get_current_user)):
+    return await generate_skill_report(user["_id"])

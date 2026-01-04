@@ -4,6 +4,14 @@ from pathlib import Path
 from fastapi import FastAPI
 from dotenv import load_dotenv
 
+required_vars = [
+    "MONGO_URI",
+    "DB_NAME",
+    "JWT_SECRET_KEY",
+    "OPENAI_API_KEY"
+]
+
+
 # -------------------------------------------------
 # 🔐 LOAD .env FIRST (BEFORE anything else)
 # -------------------------------------------------
@@ -47,3 +55,6 @@ async def startup_event():
 # -------------------------------------------------
 from backend.routes import router
 app.include_router(router, prefix="/api")
+
+
+

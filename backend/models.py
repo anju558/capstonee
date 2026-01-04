@@ -126,3 +126,12 @@ class TaskEvent(BaseModel):
 
     class Config:
         populate_by_name = True
+
+# backend/models/event.py
+class EventModel(BaseModel):
+    event_type: str
+    tool: str
+    language: str
+    message: Optional[str] = None
+
+    
