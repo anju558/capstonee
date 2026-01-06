@@ -1,8 +1,9 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
+from typing import List, Optional
 
-# ✅ IMPORT THE SERVICE
-from backend.services.skill_engine import analyze_skill
+# ✅ IMPORT UNIFIED PIPELINE
+from backend.services.ai_pipeline import unified_ai_pipeline
 
 
 router = APIRouter(
@@ -14,19 +15,26 @@ router = APIRouter(
 class CodeAnalysisRequest(BaseModel):
     language: str
     code: str
-    diagnostics: str | None = None
+    diagnostics: Optional[List[str]] = []
 
 
 @router.post("/code")
-def analyze_code(request: CodeAnalysisRequest):
+async def analyze_code(request: CodeAnalysisRequest):
     """
-    Analyze user-written code and return skill gap insights
+    Unified AI analysis:
+    Code → Skill gaps → Knowledge retrieval → Improvements
     """
 
-    result = analyze_skill(
+    diagnostics_text = (
+        "\n".join(request.diagnostics)
+        if request.diagnostics
+        else None
+    )
+
+    result = await unified_ai_pipeline(
         language=request.language,
         code=request.code,
-        diagnostics=request.diagnostics
+        diagnostics=diagnostics_text  
     )
 
     return result

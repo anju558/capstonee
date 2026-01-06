@@ -1,42 +1,68 @@
-﻿# Byte-compiled / optimized / DLL files
+﻿# Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.class
+*.py[cod]
+*$py.class
 
 # Virtual Environment
 venv/
 ENV/
 
 # Logs & Data
-*.log
 logs/
-simulator/events.log
+*.log
 data/
 mongodump/
 
-# Env files (never commit these!)
+# Environment variables
 .env
 .env.local
 
-# IDE
+# Node.js
+node_modules/
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# TypeScript build output
+dist/
+out/
+build/
+
+# IDE / Editor
 .vscode/
 .idea/
-.DS_Store
-
-# Build & Dist
-dist/
-build/
-*.egg-info/
-
-# Docker
-docker-compose.override.yml
-
-# OS generated files
-Thumbs.db
-desktop.ini
-
-# Temp files
 *.swp
 *.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Byte-compiled / optimized / DLL files
+*.pyc
+
+# MyPy cache
+.mypy_cache/
+
+# PyInstaller
+build/
+dist/
+
+# Docker
+Dockerfile
+docker-compose.yml
+
+# Local config
+config/local.json
+config/secrets.json
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# VS Code extension files (if not needed)
+*.vsix
+
+# skill-coach
+skill-coach/out/
+skill-coach/package-lock.json

@@ -1,21 +1,89 @@
-# backend/services/llm_engine.py
 import os
 import time
 import requests
 from dotenv import load_dotenv
 
+# -------------------------------------------------
+# Load environment variables
+# -------------------------------------------------
 load_dotenv()
+
 API_KEY = os.getenv("GEMINI_API_KEY")
 if not API_KEY:
-    raise RuntimeError("GEMINI_API_KEY not set")
+    raise RuntimeError("❌ GEMINI_API_KEY not set")
 
-def analyze_code_with_llm(language: str, code: str, diagnostics: str | None = None):
+MODEL_NAME = "gemini-flash-latest"
+BASE_URL = (
+    "https://generativelanguage.googleapis.com/v1beta/"
+    f"models/{MODEL_NAME}:generateContent?key={API_KEY}"
+)
+
+HEADERS = {
+    "Content-Type": "application/json"
+}
+
+
+# -------------------------------------------------
+# 🔹 INTERNAL HELPER
+# -------------------------------------------------
+def _call_gemini(prompt: str) -> str:
+    """
+    Centralized Gemini API caller with retry + safety
+    """
+    data = {
+        "contents": [
+            {
+                "parts": [
+                    {"text": prompt}
+                ]
+            }
+        ]
+    }
+
+    for attempt in range(3):
+        try:
+            response = requests.post(
+                BASE_URL,
+                headers=HEADERS,
+                json=data,
+                timeout=30
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+                return result["candidates"][0]["content"]["parts"][0]["text"]
+
+            if response.status_code == 429:
+                time.sleep(2 ** attempt)
+                continue
+
+            raise RuntimeError(response.text)
+
+        except requests.RequestException as e:
+            if attempt == 2:
+                raise RuntimeError(f"Gemini API failed: {e}")
+
+    raise RuntimeError("Gemini failed after retries")
+
+
+# -------------------------------------------------
+# 🔹 SKILL ANALYSIS (used by /api/analyze/code)
+# -------------------------------------------------
+def analyze_code_with_llm(
+    language: str,
+    code: str,
+    diagnostics: str | None = None
+) -> str:
     prompt = f"""
-You are a technical skill evaluator.
+You are a JSON-only API.
 
-Analyze the following {language} code and respond ONLY in valid JSON.
+RULES:
+- Respond ONLY with valid JSON
+- No markdown
+- No explanation
+- No extra text
 
-JSON format:
+JSON schema:
 {{
   "strengths": [],
   "skill_gaps": [],
@@ -23,49 +91,32 @@ JSON format:
   "confidence_score": 0
 }}
 
-Code:
+Analyze this {language} code:
+
 {code}
 """
 
-    # ✅ Use alias that always works for your key
-    model_name = "gemini-flash-latest"  # ← resolves to e.g., gemini-2.0-flash-001
+    if diagnostics:
+        prompt += f"\nDiagnostics:\n{diagnostics}"
 
-    # Build URL safely (no spaces)
-    url = (
-        "https://generativelanguage.googleapis.com/v1beta/"
-        f"models/{model_name}:generateContent?key={API_KEY}"
-    )
+    return _call_gemini(prompt)
 
-    print(f"🔍 Calling: .../{model_name}:generateContent?key=...{API_KEY[-4:]}")
 
-    data = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "safetySettings": [
-            {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
-            {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
-            {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
-            {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
-        ]
-    }
+# -------------------------------------------------
+# 🔹 RAG GENERATION (used by /api/rag/ask)
+# -------------------------------------------------
+def generate_answer(question: str, context: str) -> str:
+    prompt = f"""
+You are a helpful AI assistant.
 
-    for attempt in range(3):
-        try:
-            r = requests.post(url, json=data, timeout=30)
-            if r.status_code == 200:
-                return r.json()["candidates"][0]["content"]["parts"][0]["text"]
-            
-            elif r.status_code == 429:
-                wait = 2 ** attempt
-                print(f"⚠️ Quota limit. Retrying in {wait}s...")
-                time.sleep(wait)
-            
-            else:
-                err = r.json().get("error", {}).get("message", r.text[:200])
-                raise RuntimeError(f"❌ {r.status_code}: {err}")
+Use ONLY the information provided in the context.
+If the answer is not present, say: "I don't know based on the given context."
 
-        except requests.RequestException as e:
-            if attempt == 2:
-                raise RuntimeError(f"Network error: {e}")
-            time.sleep(1)
+Context:
+{context}
 
-    raise RuntimeError("Max retries exceeded")
+Question:
+{question}
+"""
+
+    return _call_gemini(prompt)
