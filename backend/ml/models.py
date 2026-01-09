@@ -1,6 +1,11 @@
-def predict_mastery(features: dict):
-    if features["normalized_gap"] > 0.6:
-        return "low"
-    elif features["normalized_gap"] > 0.3:
+def predict_mastery(confidence_score: float) -> str:
+    """
+    Predict mastery level from final confidence score (0–100).
+    """
+
+    if confidence_score >= 80:
+        return "high"
+    elif confidence_score >= 50:
         return "medium"
-    return "high"
+    else:
+        return "low"

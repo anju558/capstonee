@@ -28,4 +28,6 @@ def analyze_skill(language: str, code: str, diagnostics: str | None = None):
         "skill_gaps": parsed.get("skill_gaps", []),
         "suggestions": parsed.get("suggestions", []),
         "confidence_score": parsed.get("confidence_score", 0),
+        "estimated_level": parsed.get("estimated_level", 2)
+        
     }

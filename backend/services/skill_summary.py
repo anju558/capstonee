@@ -1,4 +1,4 @@
-from backend.database import events_collection
+from backend.database import user_skills_collection
 from backend.services.skill_insights import (
     compute_confidence,
     generate_recommendation
@@ -7,32 +7,36 @@ from backend.services.skill_insights import (
 async def generate_skill_report(user_id):
     summary = {}
 
-    cursor = events_collection.aggregate([
+    cursor = user_skills_collection.aggregate([
         {
             "$match": {
-                "user_id": user_id,
-                "language": {"$ne": None}
+                "user_id": str(user_id),
+                "skill": {"$ne": None}
             }
         },
         {
             "$group": {
-                "_id": "$language",
+                "_id": "$skill",
                 "attempts": {"$sum": 1},
                 "avg_difficulty": {"$avg": "$difficulty"},
-                "gaps_detected": {"$sum": "$gap"}
+                "gaps_detected": {
+                    "$sum": {
+                        "$cond": [{"$eq": ["$gap", True]}, 1, 0]
+                    }
+                }
             }
         }
     ])
 
     async for doc in cursor:
-        language = doc["_id"]
+        skill = doc["_id"]
 
-        if not language:
-            continue  # safety guard
+        if not skill:
+            continue
 
         confidence = compute_confidence(doc)
 
-        summary[language.lower()] = {
+        summary[skill.lower()] = {
             "attempts": doc.get("attempts", 0),
             "avg_difficulty": round(doc.get("avg_difficulty", 0), 2),
             "gaps_detected": doc.get("gaps_detected", 0),

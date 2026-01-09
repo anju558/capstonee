@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 from fastapi import FastAPI
 from dotenv import load_dotenv
+from contextlib import asynccontextmanager
 
 # -------------------------------------------------
 # 🔐 LOAD .env BEFORE ANY OTHER IMPORT
@@ -20,13 +21,19 @@ print("✅ .env loaded successfully")
 from backend.database import init_db
 from backend.routes import router
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    await init_db()
+    yield
+    # Shutdown (optional cleanup later)
+
+
 app = FastAPI(
     title="Skill Agent Backend",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
-
-@app.on_event("startup")
-async def startup_event():
-    await init_db()
 
 app.include_router(router, prefix="/api")

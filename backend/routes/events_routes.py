@@ -7,32 +7,36 @@ from backend.database import events_collection
 
 router = APIRouter(prefix="/events", tags=["Events"])
 
+
 @router.post("/")
 async def ingest_event(
-    event: dict = Body(..., example={
-        "event_type": "compile_error",
-        "tool": "VSCode",
-        "language": "Python",
-        "message": "IndentationError"
-    }),
+    event: dict = Body(...),
     user=Depends(get_current_user)
 ):
-    # Attach user info
-    event["user_id"] = user["_id"]
+    """
+    Ingest and store a skill-related event.
+    This endpoint does NOT return MongoDB documents.
+    """
 
-    # Process event
+    # Always enforce user_id as string
+    event["user_id"] = str(user["_id"])
+
+    # Normalize & process event
     processed = await process_event(event)
 
-    # Store event in MongoDB
+    # Store full record separately (DB only)
     record = {
         **processed,
-        "user_id": user["_id"],
+        "user_id": str(user["_id"]),
         "created_at": datetime.utcnow()
     }
 
     await events_collection.insert_one(record)
 
+    # ✅ SAFE RESPONSE (NO ObjectId)
     return {
         "status": "stored",
-        "data": processed
+        "skill": processed.get("skill"),
+        "gap": processed.get("gap"),
+        "event_type": processed.get("event_type")
     }
