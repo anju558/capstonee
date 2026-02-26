@@ -1,21 +1,55 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Login</title>
-  <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <title>Login | Skill Coach</title>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 
-<h2>Login</h2>
+<nav class="navbar">
+  <div class="logo">Skill Coach</div>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/signup">Signup</a>
+  </div>
+</nav>
 
-<form id="loginForm">
-  <input type="email" placeholder="Email" id="email" required />
-  <input type="password" placeholder="Password" id="password" required />
-  <button type="submit">Login</button>
-</form>
+<section class="login-wrapper">
 
-<p id="msg"></p>
+  <div class="login-info">
+    <h1>Welcome Back</h1>
+    <p class="subtitle">
+      Continue your developer growth journey.
+    </p>
 
-<script src="js/login.js"></script>
+    <ul class="benefits">
+      <li>View skill confidence score</li>
+      <li>Track weak technologies</li>
+      <li>Monitor AI feedback</li>
+      <li>Access growth dashboard</li>
+    </ul>
+  </div>
+
+  <div class="login-form-container">
+    <h2>Login to Your Account</h2>
+
+    <form id="loginForm">
+      <input type="email" id="email" placeholder="Email Address" required>
+      <input type="password" id="password" placeholder="Password" required>
+      <button type="submit">Login</button>
+      <p id="message"></p>
+    </form>
+
+    <p class="signup-redirect">
+      Don't have an account?
+      <a href="/signup">Create Account</a>
+    </p>
+  </div>
+
+</section>
+
+<script src="/static/app.js"></script>
+
 </body>
 </html>

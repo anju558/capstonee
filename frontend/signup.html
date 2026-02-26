@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Create Account | Skill Coach</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="logo">Skill Coach</div>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/login">Login</a>
+  </div>
+</nav>
+
+<section class="signup-wrapper">
+
+  <div class="signup-info">
+    <h1>Join Skill Coach</h1>
+    <p class="subtitle">
+      Start tracking your developer growth with AI-powered analysis.
+    </p>
+
+    <ul class="benefits">
+      <li>Real-time skill analysis</li>
+      <li>AI-powered improvement suggestions</li>
+      <li>Skill confidence scoring dashboard</li>
+      <li>Seamless VS Code integration</li>
+      <li>Secure user profile</li>
+    </ul>
+  </div>
+
+  <div class="signup-form-container">
+    <h2>Create Your Account</h2>
+
+    <form id="signupForm">
+      <input type="text" id="username" placeholder="Username" required>
+      <input type="email" id="email" placeholder="Email Address" required>
+      <input type="password" id="password" placeholder="Password (min 8 characters)" required>
+      <input type="password" id="confirm_password" placeholder="Confirm Password" required>
+      <button type="submit">Create Account</button>
+      <p id="message"></p>
+    </form>
+
+    <p class="login-redirect">
+      Already have an account?
+      <a href="/login">Login</a>
+    </p>
+  </div>
+
+</section>
+
+<script src="/static/app.js"></script>
+
+</body>
+</html>

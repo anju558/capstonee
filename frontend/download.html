@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Download Extension | Skill Coach</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="logo">Skill Coach</div>
+  <div class="nav-links">
+    <a href="/dashboard">Dashboard</a>
+    <a href="/" onclick="logout()">Logout</a>
+  </div>
+</nav>
+
+<section class="download-wrapper">
+
+  <h1>Install Skill Coach VS Code Extension</h1>
+  <p class="subtitle">
+    Integrate AI-powered skill analysis directly into your development workflow.
+  </p>
+
+  <div class="download-card">
+    <h2>Step 1 — Download Extension</h2>
+    <p>Click below to download the VS Code extension package.</p>
+
+    <!-- ✅ WORKING DOWNLOAD LINK -->
+    <a href="/static/skill-coach-0.0.1.vsix"
+       download
+       class="cta-btn">
+       Download Extension (.vsix)
+    </a>
+  </div>
+
+  <div class="download-card">
+    <h2>Step 2 — Install in VS Code</h2>
+    <ol>
+      <li>Open VS Code</li>
+      <li>Go to Extensions (Ctrl + Shift + X)</li>
+      <li>Click three dots (…) → Install from VSIX</li>
+      <li>Select downloaded file</li>
+    </ol>
+  </div>
+
+  <div class="download-card">
+    <h2>Step 3 — Login Inside VS Code</h2>
+    <ol>
+      <li>Open Command Palette (Ctrl + Shift + P)</li>
+      <li>Run: <strong>Skill Coach: Login</strong></li>
+      <li>Enter your registered email & password</li>
+      <li>Start coding 🎯</li>
+    </ol>
+  </div>
+
+</section>
+
+<script src="/static/app.js"></script>
+
+</body>
+</html>

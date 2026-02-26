@@ -1,54 +1,102 @@
-body {
-  font-family: Arial, sans-serif;
-  background: #f5f5f5;
-  padding: 20px;
+/* GLOBAL */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", sans-serif;
 }
 
-nav {
+body {
+  background: linear-gradient(135deg, #f5f7fa, #e9efff);
+  color: #1f2937;
+  min-height: 100vh;
+}
+
+/* NAVBAR */
+
+.navbar {
   display: flex;
   justify-content: space-between;
-  background: #222;
-  padding: 10px;
-}
-
-nav a {
-  color: white;
-  margin-left: 10px;
-  text-decoration: none;
-}
-
-.hero {
-  text-align: center;
-  margin-top: 50px;
-}
-
-.btn {
-  padding: 10px 20px;
-  background: #007bff;
-  color: white;
-  text-decoration: none;
-}
-
-.features {
-  display: flex;
-  gap: 20px;
-  margin-top: 40px;
-}
-
-.card {
+  align-items: center;
+  padding: 20px 60px;
   background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.04);
 }
 
-form {
-  max-width: 300px;
-  margin: auto;
+.logo {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1e3a8a;
 }
 
-input, button {
+.nav-user {
+  font-size: 14px;
+  margin-left: 8px;
+  color: #6b7280;
+}
+
+.nav-links a {
+  margin-left: 25px;
+  text-decoration: none;
+  color: #374151;
+  font-weight: 500;
+}
+
+.nav-links a:hover {
+  color: #2563eb;
+}
+
+/* DASHBOARD */
+
+.dashboard-container {
+  max-width: 1100px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+h2 {
+  margin-bottom: 15px;
+  color: #1e3a8a;
+}
+
+/* TABLE */
+
+table {
   width: 100%;
-  padding: 10px;
-  margin-top: 10px;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 6px 25px rgba(0,0,0,0.04);
+}
+
+table th,
+table td {
+  padding: 14px;
+  text-align: left;
+}
+
+table th {
+  background: #f3f4f6;
+  font-weight: 600;
+}
+
+table tr:not(:last-child) td {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+table tr:hover {
+  background: #f9fafb;
+}
+
+/* CHART */
+
+canvas {
+  background: white;
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: 0 6px 25px rgba(0,0,0,0.05);
+  max-height: 280px !important;
 }

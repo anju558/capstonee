@@ -1,47 +1,54 @@
-from backend.database import user_skills_collection
-from backend.services.skill_insights import (
-    compute_confidence,
-    generate_recommendation
-)
+from collections import defaultdict
+from backend.database import events_collection
 
-async def generate_skill_report(user_id):
-    summary = {}
 
-    cursor = user_skills_collection.aggregate([
-        {
-            "$match": {
-                "user_id": str(user_id),
-                "skill": {"$ne": None}
-            }
-        },
-        {
-            "$group": {
-                "_id": "$skill",
-                "attempts": {"$sum": 1},
-                "avg_difficulty": {"$avg": "$difficulty"},
-                "gaps_detected": {
-                    "$sum": {
-                        "$cond": [{"$eq": ["$gap", True]}, 1, 0]
-                    }
-                }
-            }
-        }
-    ])
+def calculate_confidence(events):
 
-    async for doc in cursor:
-        skill = doc["_id"]
+    total = len(events)
+    if total == 0:
+        return 50.0
 
-        if not skill:
-            continue
+    successes = sum(1 for e in events if not e.get("gap"))
+    accuracy = successes / total
 
-        confidence = compute_confidence(doc)
+    avg_difficulty = sum(e.get("difficulty", 1) for e in events) / total
+    difficulty_factor = min(1, avg_difficulty / 5)
 
-        summary[skill.lower()] = {
-            "attempts": doc.get("attempts", 0),
-            "avg_difficulty": round(doc.get("avg_difficulty", 0), 2),
-            "gaps_detected": doc.get("gaps_detected", 0),
-            "confidence_score": confidence,
-            "recommendation": generate_recommendation(confidence)
-        }
+    score = (0.7 * accuracy) + (0.3 * difficulty_factor)
 
-    return summary
+    return round(score * 100, 2)
+
+
+async def generate_skill_report(user_id: str):
+
+    events = await events_collection.find(
+        {"user_id": user_id}
+    ).sort("created_at", 1).to_list(1000)
+
+    skills_data = defaultdict(list)
+
+    for e in events:
+        skill = e.get("language") or e.get("skill")
+        if skill:
+            skills_data[skill.lower()].append(e)
+
+    report = []
+
+    for skill, skill_events in skills_data.items():
+
+        confidence_score = calculate_confidence(skill_events)
+
+        report.append({
+            "skill": skill,
+            "confidence_score": confidence_score
+        })
+
+    overall = (
+        round(sum(r["confidence_score"] for r in report) / len(report), 2)
+        if report else 50.0
+    )
+
+    return {
+        "overall_score": overall,
+        "skills": report
+    }

@@ -6,7 +6,7 @@ from backend.routes.analytics_routes import router as analytics_router
 from backend.routes.events_routes import router as events_router
 from backend.routes.rag import router as rag_router
 from backend.routes.knowledge_routes import router as knowledge_router
-from backend.routes.skill_profile import router as skill_profile_router  
+from backend.routes.skill_profile import router as skill_profile_router
 
 router = APIRouter()
 
@@ -16,4 +16,4 @@ router.include_router(analytics_router)
 router.include_router(events_router)
 router.include_router(rag_router)
 router.include_router(knowledge_router)
-router.include_router(skill_profile_router)  
+router.include_router(skill_profile_router)

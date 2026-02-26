@@ -1,27 +1,97 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Dashboard</title>
-  <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <title>Dashboard | Skill Coach</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-<h2>Welcome to Skill Dashboard</h2>
-
-<div class="dashboard">
-  <div class="card">
-    <h3>Total Skill Score</h3>
-    <p id="score">Loading...</p>
+<!-- ================= NAVBAR ================= -->
+<nav class="navbar">
+  <div class="logo">
+    Skill Coach
+    <span id="navUser" class="nav-user"></span>
   </div>
 
-  <div class="card">
-    <h3>Badges</h3>
-    <ul id="badges"></ul>
+  <div class="nav-links">
+    <a href="/download">Extension</a>
+    <a href="#" onclick="logout()">Logout</a>
   </div>
-</div>
+</nav>
 
-<button onclick="logout()">Logout</button>
+<!-- ================= DASHBOARD ================= -->
+<section class="dashboard-container">
 
-<script src="js/dashboard.js"></script>
+  <!-- ========== USER SECTION ========== -->
+  <div id="userSection" style="display:none;">
+
+    <h2>Skill Trend Over Time</h2>
+
+    <!-- Chart Wrapper (IMPORTANT FIX) -->
+    <div class="chart-box">
+      <canvas id="skillChart"></canvas>
+    </div>
+
+    <h2 style="margin-top:40px;">Technologies Used</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Technology</th>
+          <th>Level</th>
+        </tr>
+      </thead>
+      <tbody id="userSkillsTable"></tbody>
+    </table>
+
+  </div>
+
+
+  <!-- ========== ADMIN SECTION ========== -->
+  <div id="adminSection" style="display:none;">
+
+    <h2>All Users</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody id="adminUsersTableBody"></tbody>
+    </table>
+
+    <!-- Selected User Details -->
+    <div id="adminUserDetails" style="margin-top:40px; display:none;">
+
+      <h3 id="selectedUserTitle"></h3>
+
+      <!-- Admin Chart Wrapper -->
+      <div class="chart-box">
+        <canvas id="adminUserChart"></canvas>
+      </div>
+
+      <table style="margin-top:20px;">
+        <thead>
+          <tr>
+            <th>Technology</th>
+            <th>Level</th>
+          </tr>
+        </thead>
+        <tbody id="adminSkillsTable"></tbody>
+      </table>
+
+    </div>
+
+  </div>
+
+</section>
+
+<script src="/static/app.js?v=21"></script>
 </body>
 </html>

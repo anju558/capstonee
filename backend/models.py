@@ -4,6 +4,7 @@ from bson import ObjectId
 import re
 from datetime import datetime
 
+
 # -------------------------------------------------
 # 🔹 Custom ObjectId for Pydantic v2
 # -------------------------------------------------
@@ -57,19 +58,34 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=8)
     confirm_password: str
+    role: str = "user"  # 👈 Added role support
 
     @field_validator("username")
     @classmethod
     def validate_username(cls, v):
         if not re.match(r"^[a-zA-Z0-9_]+$", v):
-            raise ValueError("Invalid username")
+            raise ValueError("Username must contain only letters, numbers, underscore")
         return v.lower()
+
+    @field_validator("password")
+    @classmethod
+    def validate_password_strength(cls, v):
+        if len(v) < 8:
+            raise ValueError("Password must be at least 8 characters")
+        return v
 
     @field_validator("confirm_password")
     @classmethod
     def passwords_match(cls, v, info):
         if v != info.data.get("password"):
             raise ValueError("Passwords do not match")
+        return v
+
+    @field_validator("role")
+    @classmethod
+    def validate_role(cls, v):
+        if v not in ["user", "admin"]:
+            raise ValueError("Role must be 'user' or 'admin'")
         return v
 
 

@@ -1,122 +1,215 @@
 import os
+import json
+import re
 import time
 import requests
+from typing import Optional
 from dotenv import load_dotenv
 
-# -------------------------------------------------
-# Load environment variables
-# -------------------------------------------------
+# =================================================
+# 🔐 LOAD ENVIRONMENT
+# =================================================
+
 load_dotenv()
 
-API_KEY = os.getenv("GEMINI_API_KEY")
-if not API_KEY:
-    raise RuntimeError("❌ GEMINI_API_KEY not set")
-
-MODEL_NAME = "gemini-flash-latest"
-BASE_URL = (
-    "https://generativelanguage.googleapis.com/v1beta/"
-    f"models/{MODEL_NAME}:generateContent?key={API_KEY}"
-)
-
-HEADERS = {
-    "Content-Type": "application/json"
-}
+MODEL_NAME = "gemini-2.5-flash"
+BASE_URL = "https://generativelanguage.googleapis.com/v1/models/"
+HEADERS = {"Content-Type": "application/json"}
+TIMEOUT = 30
+MAX_RETRIES = 2
 
 
-# -------------------------------------------------
-# 🔹 INTERNAL HELPER
-# -------------------------------------------------
-def _call_gemini(prompt: str) -> str:
-    """
-    Centralized Gemini API caller with retry + safety
-    """
-    data = {
+# =================================================
+# 🔹 SAFE JSON FALLBACK
+# =================================================
+
+def _safe_json(message: str) -> str:
+    return json.dumps({
+        "has_error": False,
+        "confidence_score": 50,
+        "simple_explanation": message,
+        "corrected_code": "",
+        "next_steps": []
+    })
+
+
+# =================================================
+# 🔹 GEMINI REQUEST HANDLER
+# =================================================
+
+def _make_gemini_request(prompt: str) -> Optional[str]:
+
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return None
+
+    url = f"{BASE_URL}{MODEL_NAME}:generateContent?key={api_key}"
+
+    payload = {
         "contents": [
-            {
-                "parts": [
-                    {"text": prompt}
-                ]
-            }
+            {"parts": [{"text": prompt}]}
         ]
     }
 
-    for attempt in range(3):
+    for attempt in range(MAX_RETRIES + 1):
         try:
             response = requests.post(
-                BASE_URL,
+                url,
                 headers=HEADERS,
-                json=data,
-                timeout=30
+                json=payload,
+                timeout=TIMEOUT
             )
 
             if response.status_code == 200:
-                result = response.json()
-                return result["candidates"][0]["content"]["parts"][0]["text"]
+                data = response.json()
+                candidates = data.get("candidates", [])
 
-            if response.status_code == 429:
-                time.sleep(2 ** attempt)
+                if not candidates:
+                    return None
+
+                content = candidates[0].get("content", {})
+                parts = content.get("parts", [])
+
+                if not parts:
+                    return None
+
+                return parts[0].get("text")
+
+            if 500 <= response.status_code < 600:
+                if attempt < MAX_RETRIES:
+                    time.sleep(2)
+                    continue
+
+            return None
+
+        except requests.Timeout:
+            if attempt < MAX_RETRIES:
+                time.sleep(2)
                 continue
+            return None
 
-            raise RuntimeError(response.text)
+        except requests.RequestException:
+            return None
 
-        except requests.RequestException as e:
-            if attempt == 2:
-                raise RuntimeError(f"Gemini API failed: {e}")
-
-    raise RuntimeError("Gemini failed after retries")
+    return None
 
 
-# -------------------------------------------------
-# 🔹 SKILL ANALYSIS (used by /api/analyze/code)
-# -------------------------------------------------
+# =================================================
+# 🔹 JSON CLEANER
+# =================================================
+
+def _extract_valid_json(raw_text: str) -> Optional[dict]:
+
+    if not raw_text:
+        return None
+
+    cleaned = raw_text.strip()
+
+    if cleaned.startswith("```"):
+        cleaned = re.sub(r"```json|```", "", cleaned).strip()
+
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+
+    match = re.search(r"\{[\s\S]*\}", cleaned)
+    if match:
+        try:
+            return json.loads(match.group())
+        except json.JSONDecodeError:
+            pass
+
+    return None
+
+
+# =================================================
+# 🔹 MAIN ANALYSIS
+# =================================================
+
 def analyze_code_with_llm(
     language: str,
     code: str,
-    diagnostics: str | None = None
+    combined_context: str = ""
 ) -> str:
+
     prompt = f"""
-You are a JSON-only API.
+You are a VS Code AI coding assistant.
 
-RULES:
-- Respond ONLY with valid JSON
-- No markdown
-- No explanation
-- No extra text
+STRICT RULES:
+- Keep explanation under 4 short lines.
+- Use simple beginner-friendly language.
+- No long paragraphs.
+- Maximum 3 next_steps only.
+- Be direct and concise.
+- No markdown formatting.
 
-JSON schema:
+Respond ONLY in valid JSON:
+
 {{
-  "strengths": [],
-  "skill_gaps": [],
-  "suggestions": [],
-  "confidence_score": 0
+  "has_error": false,
+  "confidence_score": 0,
+  "simple_explanation": "",
+  "corrected_code": "",
+  "next_steps": []
 }}
 
-Analyze this {language} code:
+Context:
+{combined_context}
 
+Code ({language}):
 {code}
 """
 
-    if diagnostics:
-        prompt += f"\nDiagnostics:\n{diagnostics}"
+    raw_output = _make_gemini_request(prompt)
 
-    return _call_gemini(prompt)
+    if not raw_output:
+        return _safe_json("AI response unavailable.")
+
+    parsed_json = _extract_valid_json(raw_output)
+
+    if not parsed_json:
+        return _safe_json("AI response parsing failed.")
+
+    # ✅ LIMIT NEXT STEPS TO 3 (ONLY NEW LOGIC ADDED)
+    if "next_steps" in parsed_json and isinstance(parsed_json["next_steps"], list):
+        parsed_json["next_steps"] = parsed_json["next_steps"][:3]
+
+    return json.dumps(parsed_json)
 
 
-# -------------------------------------------------
-# 🔹 RAG GENERATION (used by /api/rag/ask)
-# -------------------------------------------------
+# =================================================
+# 🔹 CHAT MODE
+# =================================================
+
 def generate_answer(question: str, context: str) -> str:
-    prompt = f"""
-You are a helpful AI assistant.
 
-Use ONLY the information provided in the context.
-If the answer is not present, say: "I don't know based on the given context."
+    prompt = f"""
+You are a VS Code coding assistant.
+
+Rules:
+- Answer in maximum 5 short lines.
+- Be clear and direct.
+- Avoid long theoretical explanations.
+- No markdown.
+- No headings.
 
 Context:
 {context}
 
-Question:
+User Question:
 {question}
 """
 
-    return _call_gemini(prompt)
+    raw_output = _make_gemini_request(prompt)
+
+    if not raw_output:
+        return "AI temporarily unavailable."
+
+    cleaned = raw_output.strip()
+
+    # 🔥 Force maximum 6 lines
+    lines = cleaned.splitlines()
+    shortened = "\n".join(lines[:6])
+
+    return shortened

@@ -15,25 +15,21 @@ async def ingest_event(
 ):
     """
     Ingest and store a skill-related event.
-    This endpoint does NOT return MongoDB documents.
     """
 
-    # Always enforce user_id as string
-    event["user_id"] = str(user["_id"])
+    # ✅ FIX: use user["sub"] instead of user["_id"]
+    event["user_id"] = str(user["sub"])
 
-    # Normalize & process event
     processed = await process_event(event)
 
-    # Store full record separately (DB only)
     record = {
         **processed,
-        "user_id": str(user["_id"]),
+        "user_id": str(user["sub"]),
         "created_at": datetime.utcnow()
     }
 
     await events_collection.insert_one(record)
 
-    # ✅ SAFE RESPONSE (NO ObjectId)
     return {
         "status": "stored",
         "skill": processed.get("skill"),

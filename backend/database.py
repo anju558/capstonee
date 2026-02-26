@@ -3,23 +3,17 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import ReadPreference
 from dotenv import load_dotenv
 
-# -------------------------------------------------
-# 🔐 Load environment variables
-# -------------------------------------------------
 load_dotenv()
 
 MONGO_URI = os.getenv("MONGO_URI")
 DB_NAME = os.getenv("DB_NAME")
 
 if not MONGO_URI:
-    raise RuntimeError("❌ MONGO_URI not set in .env")
+    raise RuntimeError("❌ MONGO_URI not set")
 
 if not DB_NAME:
-    raise RuntimeError("❌ DB_NAME not set in .env")
+    raise RuntimeError("❌ DB_NAME not set")
 
-# -------------------------------------------------
-# 🔗 MongoDB Client
-# -------------------------------------------------
 client = AsyncIOMotorClient(
     MONGO_URI,
     serverSelectionTimeoutMS=8000,
@@ -29,9 +23,7 @@ client = AsyncIOMotorClient(
 
 database = client[DB_NAME]
 
-# -------------------------------------------------
-# 📦 Collections
-# -------------------------------------------------
+# -------------------- Collections --------------------
 users_collection = database["users"]
 skills_collection = database["skills"]
 user_skills_collection = database["user_skills"]
@@ -39,43 +31,28 @@ user_skill_state_collection = database["user_skill_state"]
 events_collection = database["events"]
 knowledge_collection = database["skill_knowledge"]
 
-# -------------------------------------------------
-# 🚀 Safe MongoDB Initialization
-# -------------------------------------------------
+# 🔑 EXTENSION AUTO-LOGIN
+extension_codes_collection = database["extension_codes"]
+
+# ✅ ADD THIS (for dashboard graph history)
+skill_history_collection = database["skill_history"]
+
+
+# -------------------- Init --------------------
 async def init_db():
-    """
-    - Verifies MongoDB connection
-    - Creates required indexes safely
-    """
-    try:
-        await client.server_info()
+    await client.server_info()
 
-        # Users
-        await users_collection.create_index(
-            "email", unique=True, background=True
-        )
+    await users_collection.create_index("email", unique=True)
 
-        # Skill taxonomy
-        await skills_collection.create_index(
-            "skill_name", unique=True, background=True
-        )
+    await user_skill_state_collection.create_index(
+        [("user_id", 1), ("skill", 1)], unique=True
+    )
 
-        # User skill state (core memory)
-        await user_skill_state_collection.create_index(
-            [("user_id", 1), ("skill", 1)],
-            unique=True,
-            background=True
-        )
+    await events_collection.create_index("user_id")
 
-        # Events
-        await events_collection.create_index("user_id", background=True)
-        await events_collection.create_index("created_at", background=True)
+    # ✅ Recommended index for graph performance
+    await skill_history_collection.create_index("user_id")
 
-        # Knowledge base
-        await knowledge_collection.create_index("embedding", background=True)
+    await knowledge_collection.create_index("embedding")
 
-        print("✅ MongoDB connection verified & indexes ensured")
-
-    except Exception as e:
-        print(f"❌ MongoDB initialization failed: {e}")
-        raise
+    print("✅ MongoDB ready")

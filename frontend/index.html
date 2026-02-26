@@ -1,29 +1,89 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Skill Coach</title>
-  <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <title>Skill Coach | AI Developer Growth Platform</title>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 
-<nav>
-  <h2>Skill Coach</h2>
-  <a href="login.html">Login</a>
-  <a href="signup.html">Signup</a>
+<nav class="navbar">
+  <div class="logo">Skill Coach</div>
+  <div class="nav-links">
+    <a href="/login">Login</a>
+    <a href="/signup" class="primary-btn">Get Started</a>
+  </div>
 </nav>
 
 <section class="hero">
-  <h1>AI-Powered Skill Coach for Developers</h1>
-  <p>Analyze your code. Improve your skills. Track progress.</p>
-  <a class="btn" href="signup.html">Get Started</a>
+  <div class="hero-content">
+    <h1>AI-Powered Skill Growth for Developers</h1>
+    <p>
+      Real-time code analysis. Skill confidence scoring.
+      Personalized AI recommendations.
+    </p>
+    <a href="/signup" class="cta-btn">Create Free Account</a>
+  </div>
+</section>
+
+<section class="how-it-works">
+  <h2>How Skill Coach Works</h2>
+
+  <div class="steps">
+
+    <div class="step">
+      <div class="step-number">1</div>
+      <div class="step-content">
+        <h3>Install VS Code Extension</h3>
+        <p>Download and install the Skill Coach extension.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">2</div>
+      <div class="step-content">
+        <h3>Login in VS Code</h3>
+        <p>Authenticate using your Skill Coach account.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">3</div>
+      <div class="step-content">
+        <h3>Start Coding</h3>
+        <p>AI analyzes your logic and detects skill gaps.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">4</div>
+      <div class="step-content">
+        <h3>Track Dashboard</h3>
+        <p>Monitor your confidence score and improvement.</p>
+      </div>
+    </div>
+
+  </div>
 </section>
 
 <section class="features">
-  <div class="card">⚡ Real-time Code Analysis</div>
-  <div class="card">📊 Skill Score Dashboard</div>
-  <div class="card">🏆 Achievement Badges</div>
-  <div class="card">🧩 VS Code Extension</div>
+  <h2>Platform Features</h2>
+
+  <div class="feature-grid">
+    <div class="feature-card">Real-time Code Analysis</div>
+    <div class="feature-card">Skill Confidence Scoring</div>
+    <div class="feature-card">AI Recommendations</div>
+    <div class="feature-card">Growth Dashboard</div>
+    <div class="feature-card">Secure Profiles</div>
+    <div class="feature-card">VS Code Integration</div>
+  </div>
 </section>
+
+<footer>
+  <p>© 2026 Skill Coach. Built for Developer Growth.</p>
+</footer>
+
+<script src="/static/app.js"></script>
 
 </body>
 </html>
