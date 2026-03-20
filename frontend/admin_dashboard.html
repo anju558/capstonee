@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard | Skill Coach</title>
+  <link rel="stylesheet" href="/static/style.css?v=1">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<!-- ================= NAVBAR ================= -->
+<nav class="navbar">
+  <div class="logo">
+    Skill Coach
+    <span id="navUser" class="nav-user"></span>
+  </div>
+
+  <div class="nav-links">
+    <a href="/dashboard">User Dashboard</a>
+    <a href="#" onclick="logout()">Logout</a>
+  </div>
+</nav>
+
+<!-- ================= ADMIN DASHBOARD ================= -->
+<section class="dashboard-container">
+
+  <!-- ===== ALL USERS TABLE ===== -->
+  <h2>All Registered Users</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody id="adminUsersTableBody">
+      <!-- Filled by JS -->
+    </tbody>
+  </table>
+
+  <!-- ===== SELECTED USER DETAILS ===== -->
+  <div id="adminUserDetails" style="margin-top:50px; display:none;">
+
+    <h3 id="selectedUserTitle"></h3>
+
+    <!-- Chart -->
+    <div class="chart-box">
+      <canvas id="adminUserChart"></canvas>
+    </div>
+
+    <!-- Technologies -->
+    <h3 style="margin-top:40px;">Technologies Used</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Technology</th>
+          <th>Level</th>
+        </tr>
+      </thead>
+      <tbody id="adminSkillsTable">
+        <!-- Filled by JS -->
+      </tbody>
+    </table>
+
+  </div>
+
+</section>
+
+<script src="/static/app.js?v=999"></script>
+
+</body>
+</html>

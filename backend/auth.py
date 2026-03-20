@@ -19,7 +19,6 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# 🔴 THIS MUST MATCH LOGIN ENDPOINT EXACTLY
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl="/api/auth/login"
 )
@@ -48,6 +47,9 @@ def create_access_token(data: dict) -> str:
         algorithm=ALGORITHM
     )
 
+# -------------------------------------------------
+# 👤 GET CURRENT USER
+# -------------------------------------------------
 def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
     try:
         payload = jwt.decode(
@@ -69,3 +71,14 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token"
         )
+
+# -------------------------------------------------
+# 👑 ADMIN GUARD (RBAC DEPENDENCY)
+# -------------------------------------------------
+def require_admin(user: dict = Depends(get_current_user)) -> dict:
+    if user.get("role") != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
+    return user

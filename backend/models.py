@@ -1,5 +1,12 @@
 from typing import List, Optional
-from pydantic import BaseModel, Field, EmailStr, field_validator, field_serializer
+from pydantic import (
+    BaseModel,
+    Field,
+    EmailStr,
+    field_validator,
+    field_serializer,
+    model_validator
+)
 from bson import ObjectId
 import re
 from datetime import datetime
@@ -58,35 +65,32 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=8)
     confirm_password: str
-    role: str = "user"  # 👈 Added role support
+    role: str = "user"
 
+    # Validate username format
     @field_validator("username")
     @classmethod
     def validate_username(cls, v):
         if not re.match(r"^[a-zA-Z0-9_]+$", v):
-            raise ValueError("Username must contain only letters, numbers, underscore")
+            raise ValueError(
+                "Username must contain only letters, numbers, underscore"
+            )
         return v.lower()
 
-    @field_validator("password")
-    @classmethod
-    def validate_password_strength(cls, v):
-        if len(v) < 8:
-            raise ValueError("Password must be at least 8 characters")
-        return v
-
-    @field_validator("confirm_password")
-    @classmethod
-    def passwords_match(cls, v, info):
-        if v != info.data.get("password"):
-            raise ValueError("Passwords do not match")
-        return v
-
+    # Validate role
     @field_validator("role")
     @classmethod
     def validate_role(cls, v):
         if v not in ["user", "admin"]:
             raise ValueError("Role must be 'user' or 'admin'")
         return v
+
+    # ✅ Cross-field validation (Correct way in Pydantic v2)
+    @model_validator(mode="after")
+    def check_passwords_match(self):
+        if self.password != self.confirm_password:
+            raise ValueError("Passwords do not match")
+        return self
 
 
 class Token(BaseModel):

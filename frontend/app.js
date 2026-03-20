@@ -1,11 +1,7 @@
 const API_BASE = "http://127.0.0.1:8000/api";
-
 let userChart = null;
-let adminChart = null;
 
-/* ================================
-   TOKEN HELPERS
-================================ */
+/* ================= TOKEN ================= */
 
 function saveToken(token) {
   localStorage.setItem("token", token);
@@ -20,22 +16,46 @@ function logout() {
   window.location.href = "/";
 }
 
-/* ================================
-   SCORE → LEVEL
-================================ */
+/* ================= LOGIN ================= */
 
-function convertToLevel(score) {
-  score = Number(score) || 0;
-  if (score >= 75) return "High";
-  if (score >= 40) return "Medium";
-  return "Low";
+if (window.location.pathname.includes("login")) {
+
+  const loginForm = document.getElementById("loginForm");
+
+  if (loginForm) {
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      const formData = new URLSearchParams();
+      formData.append("username", email);
+      formData.append("password", password);
+      formData.append("grant_type", "password");
+
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: formData.toString()
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        saveToken(data.access_token);
+        window.location.href = "/dashboard";
+      } else {
+        document.getElementById("message").innerText =
+          data.detail || "Login failed";
+      }
+    });
+  }
 }
 
-/* ================================
-   AUTO LOAD DASHBOARD
-================================ */
+/* ================= DASHBOARD ================= */
 
-if (window.location.pathname === "/dashboard") {
+if (window.location.pathname.includes("dashboard")) {
   loadDashboard();
 }
 
@@ -47,170 +67,115 @@ async function loadDashboard() {
     return;
   }
 
+  document.getElementById("userSection").style.display = "block";
+
   const payload = JSON.parse(atob(token.split(".")[1]));
+  document.getElementById("navUser").innerText = ` | ${payload.sub}`;
 
-  // Show user in navbar
-  const userDisplay = payload.email || payload.sub || "";
-  document.getElementById("navUser").innerText = ` | ${userDisplay}`;
+  try {
 
-  if (payload.role === "admin") {
-    loadAdminDashboard(token);
-  } else {
-    loadUserDashboard(token);
+    /* ================= TABLE DATA ================= */
+
+    const skillRes = await fetch(`${API_BASE}/analytics/skills`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    const skillData = await skillRes.json();
+    const skills = skillData.skills || skillData || [];
+
+    const tableBody = document.getElementById("userSkillsTable");
+    tableBody.innerHTML = "";
+
+    skills.forEach(skill => {
+      tableBody.innerHTML += `
+        <tr>
+          <td>${skill.skill}</td>
+          <td>${convertToLevel(skill.confidence_score)}</td>
+        </tr>
+      `;
+    });
+
+    /* ================= HISTORY DATA (CLEAN TREND) ================= */
+
+    const historyRes = await fetch(`${API_BASE}/analytics/skills/history`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    const history = await historyRes.json();
+
+    if (!history || history.length === 0) return;
+
+    // Sort by date (just to be safe)
+    history.sort((a, b) =>
+      new Date(a.created_at) - new Date(b.created_at)
+    );
+
+    const labels = history.map(h => {
+      const d = new Date(h.created_at);
+      return d.toLocaleDateString();
+    });
+
+    const values = history.map(h =>
+      Number(h.confidence_score)
+    );
+
+    const ctx = document.getElementById("skillChart");
+
+    if (userChart) userChart.destroy();
+
+    userChart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [{
+          label: "Overall Skill Growth",
+          data: values,
+          borderWidth: 3,
+          tension: 0.4,
+          pointRadius: 6,
+          pointHoverRadius: 8,
+          fill: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false,
+        },
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return "Score: " + context.raw;
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 100,
+            ticks: {
+              stepSize: 10
+            }
+          }
+        }
+      }
+    });
+
+  } catch (err) {
+    console.error(err);
+    logout();
   }
 }
 
-/* ================================
-   USER DASHBOARD
-================================ */
+/* ================= LEVEL CONVERTER ================= */
 
-async function loadUserDashboard(token) {
-
-  document.getElementById("userSection").style.display = "block";
-
-  const res = await fetch(`${API_BASE}/analytics/skills`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-
-  const data = await res.json();
-  const skills = data.skills || [];
-
-  const tableBody = document.getElementById("userSkillsTable");
-  tableBody.innerHTML = "";
-
-  skills.forEach(skill => {
-    const row = document.createElement("tr");
-
-    const tech = document.createElement("td");
-    tech.textContent = skill.skill || "-";
-
-    const level = document.createElement("td");
-    level.textContent = convertToLevel(skill.confidence_score);
-
-    row.appendChild(tech);
-    row.appendChild(level);
-    tableBody.appendChild(row);
-  });
-
-  loadUserHistoryGraph(token);
-}
-
-async function loadUserHistoryGraph(token) {
-
-  const res = await fetch(`${API_BASE}/analytics/skills/history`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-
-  const history = await res.json();
-  if (!Array.isArray(history) || history.length === 0) return;
-
-  // Sort by date
-  history.sort((a, b) =>
-    new Date(a.created_at) - new Date(b.created_at)
-  );
-
-  // Show only last 10 records
-  const recent = history.slice(-10);
-
-  const labels = recent.map(h =>
-    new Date(h.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  );
-
-  const scores = recent.map(h =>
-    Number(h.confidence_score) || 0
-  );
-
-  if (userChart) userChart.destroy();
-
-  userChart = new Chart(document.getElementById("skillChart"), {
-    type: "line",
-    data: {
-      labels,
-      datasets: [{
-        data: scores,
-        borderColor: "#2563eb",
-        backgroundColor: "rgba(37,99,235,0.1)",
-        tension: 0.4,
-        pointRadius: 4,
-        fill: true
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false }
-      },
-      scales: {
-        x: {
-          grid: { display: false },
-          ticks: {
-            maxRotation: 0,
-            autoSkip: true,
-            maxTicksLimit: 6
-          }
-        },
-        y: {
-          min: 0,
-          max: 100,
-          ticks: { stepSize: 20 },
-          grid: { color: "rgba(0,0,0,0.05)" }
-        }
-      }
-    }
-  });
-}
-/* ================================
-   ADMIN DASHBOARD
-================================ */
-
-async function loadAdminDashboard(token) {
-
-  document.getElementById("adminSection").style.display = "block";
-
-  const res = await fetch(`${API_BASE}/auth/admin/users`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-
-  const users = await res.json();
-  const tableBody = document.getElementById("adminUsersTableBody");
-  tableBody.innerHTML = "";
-
-  users.forEach(u => {
-    tableBody.innerHTML += `
-      <tr onclick="loadUserDetails('${u.id}', '${u.username}')">
-        <td>${u.username}</td>
-        <td>${u.email}</td>
-        <td>${u.role}</td>
-        <td>${new Date(u.created_at).toLocaleDateString()}</td>
-      </tr>
-    `;
-  });
-}
-
-async function loadUserDetails(userId, username) {
-
-  const token = getToken();
-  document.getElementById("adminUserDetails").style.display = "block";
-  document.getElementById("selectedUserTitle").innerText =
-    `Skill Profile: ${username}`;
-
-  const res = await fetch(`${API_BASE}/analytics/admin/${userId}`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-
-  const data = await res.json();
-  const skills = data.skills || [];
-
-  const tableBody = document.getElementById("adminSkillsTable");
-  tableBody.innerHTML = "";
-
-  skills.forEach(skill => {
-    tableBody.innerHTML += `
-      <tr>
-        <td>${skill.skill}</td>
-        <td>${convertToLevel(skill.confidence_score)}</td>
-      </tr>
-    `;
-  });
+function convertToLevel(score) {
+  score = Number(score) || 0;
+  if (score >= 75) return "High";
+  if (score >= 40) return "Medium";
+  return "Low";
 }

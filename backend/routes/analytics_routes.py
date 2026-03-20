@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from bson import ObjectId
-from backend.auth import get_current_user
+from collections import defaultdict
+from datetime import datetime
+
+from backend.auth import get_current_user, require_admin
 from backend.services.skill_summary import generate_skill_report
 from backend.database import users_collection, skill_history_collection
 
@@ -16,14 +19,35 @@ async def get_skill_report(user=Depends(get_current_user)):
 
 
 # -------------------------------------------------
+# 👑 ADMIN: GET ALL USERS (FOR ADMIN DASHBOARD)
+# -------------------------------------------------
+@router.get("/admin/users")
+async def get_all_users(admin=Depends(require_admin)):
+
+    users = await users_collection.find().to_list(1000)
+
+    clean_users = []
+
+    for u in users:
+        clean_users.append({
+            "id": str(u["_id"]),
+            "username": u.get("username"),
+            "email": u.get("email"),
+            "role": u.get("role"),
+            "created_at": u.get("created_at")
+        })
+
+    return clean_users
+
+
+# -------------------------------------------------
 # 👑 ADMIN: VIEW ANY USER REPORT
 # -------------------------------------------------
 @router.get("/admin/{user_id}")
-async def get_user_skill_report(user_id: str, user=Depends(get_current_user)):
-
-    if user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Admin only")
-
+async def get_user_skill_report(
+    user_id: str,
+    admin=Depends(require_admin)
+):
     try:
         obj_id = ObjectId(user_id)
     except:
@@ -37,59 +61,84 @@ async def get_user_skill_report(user_id: str, user=Depends(get_current_user)):
 
 
 # -------------------------------------------------
-# 🔧 SAFE CONVERTER (ObjectId → string)
-# -------------------------------------------------
-def convert_objectids(data):
-    if isinstance(data, list):
-        return [convert_objectids(item) for item in data]
-    elif isinstance(data, dict):
-        return {k: convert_objectids(v) for k, v in data.items()}
-    elif isinstance(data, ObjectId):
-        return str(data)
-    else:
-        return data
-
-
-# -------------------------------------------------
-# 📈 USER: SKILL HISTORY (CLEAN FOR GRAPH)
+# 📈 USER: SKILL HISTORY (DAILY CLEAN TREND)
 # -------------------------------------------------
 @router.get("/skills/history")
 async def get_skill_history(user=Depends(get_current_user)):
 
     history = await skill_history_collection.find(
         {"user_id": user["sub"]}
-    ).sort("created_at", 1).to_list(500)
+    ).to_list(1000)
+
+    if not history:
+        return []
+
+    grouped = defaultdict(list)
+
+    for h in history:
+        if h.get("created_at"):
+            date_key = h["created_at"].date()
+            grouped[date_key].append(
+                float(h.get("confidence_score", 0))
+            )
 
     clean_history = []
 
-    for h in history:
+    for date, scores in sorted(grouped.items()):
+        average_score = sum(scores) / len(scores)
+
         clean_history.append({
-            "confidence_score": h.get("confidence_score", 0),
-            "created_at": h.get("created_at")
+            "created_at": datetime.combine(
+                date,
+                datetime.min.time()
+            ),
+            "confidence_score": round(average_score, 2)
         })
 
     return clean_history
 
 
 # -------------------------------------------------
-# 👑 ADMIN: USER HISTORY (CLEAN)
+# 👑 ADMIN: USER HISTORY (DAILY CLEAN)
 # -------------------------------------------------
 @router.get("/admin/{user_id}/history")
-async def get_user_history(user_id: str, user=Depends(get_current_user)):
+async def get_user_history(
+    user_id: str,
+    admin=Depends(require_admin)
+):
 
-    if user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Admin only")
+    try:
+        ObjectId(user_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid user ID")
 
     history = await skill_history_collection.find(
         {"user_id": user_id}
-    ).sort("created_at", 1).to_list(500)
+    ).to_list(1000)
+
+    if not history:
+        return []
+
+    grouped = defaultdict(list)
+
+    for h in history:
+        if h.get("created_at"):
+            date_key = h["created_at"].date()
+            grouped[date_key].append(
+                float(h.get("confidence_score", 0))
+            )
 
     clean_history = []
 
-    for h in history:
+    for date, scores in sorted(grouped.items()):
+        average_score = sum(scores) / len(scores)
+
         clean_history.append({
-            "confidence_score": h.get("confidence_score", 0),
-            "created_at": h.get("created_at")
+            "created_at": datetime.combine(
+                date,
+                datetime.min.time()
+            ),
+            "confidence_score": round(average_score, 2)
         })
 
     return clean_history

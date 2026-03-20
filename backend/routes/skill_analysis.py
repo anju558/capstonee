@@ -21,23 +21,47 @@ class CodeRequest(BaseModel):
 @router.post("/code")
 async def analyze_code(request: CodeRequest, user=Depends(get_current_user)):
 
-    # 1️⃣ Run AI analysis FIRST
+    # 1️⃣ Run AI analysis
     result = analyze_skill(
         language=request.language,
         code=request.code,
         combined_context=request.diagnostics or ""
     )
 
-    # 2️⃣ Now generate updated skill report (after event is saved)
+    # 2️⃣ Get updated overall score
     report = await generate_skill_report(user["sub"])
-    overall_score = report.get("overall_score", 50)
+    overall_score = float(report.get("overall_score", 50))
 
-    # 3️⃣ Save updated overall score into history
-    await skill_history_collection.insert_one({
+    now = datetime.utcnow()
+
+    # 🔧 FIX: use datetime instead of date
+    today = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # 3️⃣ Check if today's record exists
+    existing = await skill_history_collection.find_one({
         "user_id": user["sub"],
-        "confidence_score": overall_score,
-        "created_at": datetime.utcnow()
+        "date": today
     })
+
+    if existing:
+        # Update today's score
+        await skill_history_collection.update_one(
+            {"_id": existing["_id"]},
+            {
+                "$set": {
+                    "confidence_score": overall_score,
+                    "updated_at": now
+                }
+            }
+        )
+    else:
+        # Insert new daily record
+        await skill_history_collection.insert_one({
+            "user_id": user["sub"],
+            "confidence_score": overall_score,
+            "date": today,
+            "created_at": now
+        })
 
     return {
         "analysis": result
